@@ -50,15 +50,10 @@ do
     cp -r temp_repo/* apps/web$i/
     cp -r temp_repo/.[!.]* apps/web$i/ 2>/dev/null || true
 
-    if [ ! -f "apps/web$i/index.html" ]; then
-        echo "<!DOCTYPE html><html><head><title>Web Server $i</title></head><body>" > apps/web$i/index.html
-    fi
-
-    printf '%s\n' '
+    POPUP_SCRIPT='
 <script>
-window.onload = function() {
+(function() {
     const modal = document.createElement("div");
-
     modal.innerHTML = `
         <div style="
             position: fixed;
@@ -71,22 +66,24 @@ window.onload = function() {
             z-index: 9999;
             font-family: Arial;
             font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         ">
-            Loaded from WEB SERVER '"$i"' 
+            Loaded from WEB SERVER '"$i"'
         </div>
     `;
-
     document.body.appendChild(modal);
-
-    setTimeout(() => {
-        modal.remove();
-    }, 3000);
-}
+    setTimeout(() => modal.remove(), 3000);
+})();
 </script>
-' >> apps/web$i/index.html
+'
 
-    if grep -q "<body>" "apps/web$i/index.html" && ! grep -q "</body>" "apps/web$i/index.html"; then
-        echo "</body></html>" >> apps/web$i/index.html
+    if ! grep -q "Loaded from WEB SERVER" "apps/web$i/index.html" 2>/dev/null; then
+        if grep -q "</body>" "apps/web$i/index.html"; then
+            sed -i "s|</body>|${POPUP_SCRIPT}\n</body>|" "apps/web$i/index.html"
+        else
+            echo "$POPUP_SCRIPT" >> "apps/web$i/index.html"
+        fi
     fi
 
     cat <<EOF > apps/web$i/Dockerfile
@@ -121,6 +118,12 @@ cat <<EOF >> nginx/nginx.conf
 
         location / {
             proxy_pass http://backend;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header Cache-Control "no-cache, no-store, must-revalidate";
+            proxy_set_header Pragma "no-cache";
+            proxy_set_header Expires "0";
         }
     }
 }
