@@ -28,7 +28,7 @@ Ubuntu/Debian:
 
 ```bash
 sudo apt update
-sudo apt install docker.io docker-compose nginx git -y
+sudo apt install docker.io docker-compose git -y
 ```
 
 Enable Docker:
@@ -38,11 +38,11 @@ sudo systemctl enable docker
 sudo systemctl start docker
 ```
 
-Enable NGINX:
+**Important:** If NGINX is already installed on your system, stop it to avoid port conflict:
 
 ```bash
-sudo systemctl enable nginx
-sudo systemctl start nginx
+sudo systemctl stop nginx
+sudo systemctl disable nginx
 ```
 
 ---
