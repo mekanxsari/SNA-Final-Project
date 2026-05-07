@@ -64,8 +64,8 @@ window.onload = function() {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: black;
-            color: white;
+            background: #D4C5F9;
+            color: #6347a6;
             padding: 20px;
             border-radius: 10px;
             z-index: 9999;
