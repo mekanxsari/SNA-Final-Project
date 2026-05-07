@@ -48,12 +48,16 @@ do
     mkdir -p apps/web$i
 
     cp -r temp_repo/* apps/web$i/
+    cp -r temp_repo/.[!.]* apps/web$i/ 2>/dev/null || true
 
-    cat <<EOF >> apps/web$i/index.html
+    if [ ! -f "apps/web$i/index.html" ]; then
+        echo "<!DOCTYPE html><html><head><title>Web Server $i</title></head><body>" > apps/web$i/index.html
+    fi
 
+    printf '%s\n' '
 <script>
 window.onload = function() {
-    const modal = document.createElement('div');
+    const modal = document.createElement("div");
 
     modal.innerHTML = `
         <div style="
@@ -68,7 +72,7 @@ window.onload = function() {
             font-family: Arial;
             font-size: 18px;
         ">
-            Loaded from WEB SERVER $i
+            Loaded from WEB SERVER '"$i"' 
         </div>
     `;
 
@@ -79,7 +83,11 @@ window.onload = function() {
     }, 3000);
 }
 </script>
-EOF
+' >> apps/web$i/index.html
+
+    if grep -q "<body>" "apps/web$i/index.html" && ! grep -q "</body>" "apps/web$i/index.html"; then
+        echo "</body></html>" >> apps/web$i/index.html
+    fi
 
     cat <<EOF > apps/web$i/Dockerfile
 FROM nginx:alpine
