@@ -50,39 +50,26 @@ do
     cp -r temp_repo/* apps/web$i/
     cp -r temp_repo/.[!.]* apps/web$i/ 2>/dev/null || true
 
-    POPUP_SCRIPT='
+    if [ -f "apps/web$i/index.html" ]; then
+        if ! grep -q "Loaded from WEB SERVER" "apps/web$i/index.html" 2>/dev/null; then
+            cat > /tmp/popup_$$.txt <<EOF
 <script>
 (function() {
     const modal = document.createElement("div");
-    modal.innerHTML = `
-        <div style="
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #D4C5F9;
-            color: #6347a6;
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 9999;
-            font-family: Arial;
-            font-size: 18px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        ">
-            Loaded from WEB SERVER '"$i"'
-        </div>
-    `;
+    modal.innerHTML = '<div style="position:fixed;top:20px;right:20px;background:#D4C5F9;color:#6347a6;padding:20px;border-radius:10px;z-index:9999;font-family:Arial;font-size:18px;font-weight:bold;box-shadow:0 4px 6px rgba(0,0,0,0.1);">Loaded from WEB SERVER $i</div>';
     document.body.appendChild(modal);
     setTimeout(() => modal.remove(), 3000);
 })();
 </script>
-'
-
-    if ! grep -q "Loaded from WEB SERVER" "apps/web$i/index.html" 2>/dev/null; then
-        if grep -q "</body>" "apps/web$i/index.html"; then
-            sed -i "s|</body>|${POPUP_SCRIPT}\n</body>|" "apps/web$i/index.html"
-        else
-            echo "$POPUP_SCRIPT" >> "apps/web$i/index.html"
+EOF
+            if grep -q "</body>" "apps/web$i/index.html"; then
+                sed -i "/<\/body>/r /tmp/popup_$$.txt" "apps/web$i/index.html"
+                sed -i "/<\/body>/i\\" "apps/web$i/index.html" 2>/dev/null || true
+            else
+                cat /tmp/popup_$$.txt >> "apps/web$i/index.html"
+            fi
+            
+            rm -f /tmp/popup_$$.txt
         fi
     fi
 
@@ -120,7 +107,6 @@ cat <<EOF >> nginx/nginx.conf
             proxy_pass http://backend;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header Cache-Control "no-cache, no-store, must-revalidate";
             proxy_set_header Pragma "no-cache";
             proxy_set_header Expires "0";
