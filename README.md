@@ -38,12 +38,11 @@ sudo systemctl enable docker
 sudo systemctl start docker
 ```
 
-**Important:** If NGINX is already installed on your system, stop it to avoid port conflict:
-
-```bash
-sudo systemctl stop nginx
-sudo systemctl disable nginx
-```
+> **Important:** If NGINX is already installed on your system, stop it to avoid port conflict:
+> ```bash
+> sudo systemctl stop nginx
+> sudo systemctl disable nginx
+> ```
 
 ---
 
@@ -73,11 +72,18 @@ How many web servers?
 3
 
 Choose load balancing algorithm
-
 1) round_robin
 2) least_conn
 3) ip_hash
 ```
+
+### Load Balancing Algorithms
+
+| Algorithm | Description |
+|---|---|
+| `round_robin` | Cycles requests evenly across all servers in sequence |
+| `least_conn` | Routes to the server with the fewest active connections |
+| `ip_hash` | Pins a client IP to a consistent backend server |
 
 ---
 
@@ -87,20 +93,16 @@ Choose load balancing algorithm
 http://YOUR_VPS_IP
 ```
 
-Refresh multiple times to see different containers.
+Refresh multiple times to see different containers handling requests.
+
 
 ---
 
-## Stop Containers
+## Clean Up
+
+Runs a full teardown: stops all containers, removes generated files, and wipes local images.
 
 ```bash
-docker compose down
-```
-
----
-
-## Logs
-
-```bash
-docker compose logs -f
+chmod +x clean.sh
+./clean.sh
 ```
